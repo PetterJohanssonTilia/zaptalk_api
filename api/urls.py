@@ -11,4 +11,5 @@ router.register(r'follows', FollowViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('api/', include(router.urls)),
 ]

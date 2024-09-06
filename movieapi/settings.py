@@ -131,11 +131,24 @@ CORS_ALLOW_ALL_ORIGINS = True  # You might want to change this in production
 #     "https://your-frontend-domain.com",
 # ]
 
+CORS_ALLOWED_ORIGINS = []
+
 if 'CLIENT_ORIGIN' in os.environ:
-    CORS_ALLOWED_ORIGINS = [
-        os.environ.get('CLIENT_ORIGIN')
-    ]
+    client_origin = os.environ.get('CLIENT_ORIGIN')
+    if client_origin:
+        CORS_ALLOWED_ORIGINS.append(client_origin)
 
 if 'CLIENT_ORIGIN_DEV' in os.environ:
-    extracted = os.environ.get('CLIENT_ORIGIN_DEV').split("://")[1]
-    CORS_ALLOWED_ORIGINS.append(f"https://{extracted}")
+    client_origin_dev = os.environ.get('CLIENT_ORIGIN_DEV')
+    if client_origin_dev:
+        if '://' in client_origin_dev:
+            extracted = client_origin_dev.split("://")[1]
+            CORS_ALLOWED_ORIGINS.append(f"https://{extracted}")
+        else:
+            CORS_ALLOWED_ORIGINS.append(client_origin_dev)
+
+# REMOVE THIS WHEN YOU HAVE YOUR API FRONTEND SET UP IN HEROKU
+#CLIENT_ORIGIN = HEROKU FRONTEND APP
+#CLIENT_ORIGIN_DEV = GITPOD FRONTEND APP
+if not CORS_ALLOWED_ORIGINS:
+    CORS_ALLOW_ALL_ORIGINS = True
