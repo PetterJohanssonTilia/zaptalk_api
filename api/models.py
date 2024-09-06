@@ -3,9 +3,14 @@ from django.contrib.auth.models import User
 
 class Movie(models.Model):
     title = models.CharField(max_length=200)
-    description = models.TextField()
-    release_date = models.DateField()
-    genre = models.CharField(max_length=100)
+    year = models.IntegerField(default=0)
+    cast = models.JSONField(default=list)
+    genres = models.JSONField(default=list)
+    href = models.CharField(max_length=200, default='')
+    extract = models.TextField(default='')
+    thumbnail = models.URLField(max_length=500, default='https://example.com/placeholder.jpg')
+    thumbnail_width = models.IntegerField(null=True, blank=True)
+    thumbnail_height = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.title
