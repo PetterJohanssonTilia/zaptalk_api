@@ -113,7 +113,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
-    """ os.path.join(BASE_DIR, 'static'), """
+    os.path.join(BASE_DIR, 'static'),
 ]
 
 MEDIA_URL = '/media/'
@@ -134,12 +134,12 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = []
 
 if 'CLIENT_ORIGIN' in os.environ:
-    client_origin = os.environ.get('CLIENT_ORIGIN')
+    client_origin = os.environ.get('CLIENT_ORIGIN').rstrip('/')
     if client_origin:
         CORS_ALLOWED_ORIGINS.append(client_origin)
 
 if 'CLIENT_ORIGIN_DEV' in os.environ:
-    client_origin_dev = os.environ.get('CLIENT_ORIGIN_DEV')
+    client_origin_dev = os.environ.get('CLIENT_ORIGIN_DEV').rstrip('/')
     if client_origin_dev:
         if '://' in client_origin_dev:
             extracted = client_origin_dev.split("://")[1]
