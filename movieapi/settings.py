@@ -14,7 +14,8 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'DEV' in os.environ
+DEBUG = os.environ.get('DEV') == 'True'
+
 
 ALLOWED_HOSTS = [
     'zaptalk-api-c46804cb19e0.herokuapp.com',
@@ -129,15 +130,7 @@ CLOUDINARY_STORAGE = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # You might want to change this in production
-
-# If you want to specify allowed origins instead of allowing all:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",
-#     "https://your-frontend-domain.com",
-# ]
-
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = []
 
 if 'CLIENT_ORIGIN' in os.environ:
@@ -154,15 +147,25 @@ if 'CLIENT_ORIGIN_DEV' in os.environ:
         else:
             CORS_ALLOWED_ORIGINS.append(client_origin_dev)
 
-# REMOVE THIS WHEN YOU HAVE YOUR API FRONTEND SET UP IN HEROKU
-#CLIENT_ORIGIN = HEROKU FRONTEND APP
-#CLIENT_ORIGIN_DEV = GITPOD FRONTEND APP
-if not CORS_ALLOWED_ORIGINS:
-    CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = []
+
+if 'CLIENT_ORIGIN' in os.environ:
+    CSRF_TRUSTED_ORIGINS.append(os.environ.get('CLIENT_ORIGIN'))
+
+if 'CLIENT_ORIGIN_DEV' in os.environ:
+    client_origin_dev = os.environ.get('CLIENT_ORIGIN_DEV')
+    if '://' in client_origin_dev:
+        extracted = client_origin_dev.split("://")[1]
+        CSRF_TRUSTED_ORIGINS.append(f"https://{extracted}")
+    else:
+        CSRF_TRUSTED_ORIGINS.append(client_origin_dev)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
