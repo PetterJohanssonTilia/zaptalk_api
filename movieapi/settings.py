@@ -131,7 +131,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = [
+    "https://3000-petterjohan-zaptalkfron-4byg8svhpk9.ws-eu116.gitpod.io",
+]
 
 if 'CLIENT_ORIGIN' in os.environ:
     client_origin = os.environ.get('CLIENT_ORIGIN').rstrip('/')

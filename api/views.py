@@ -7,10 +7,17 @@ from .models import Movie, UserProfile, Like, Comment, Follow
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, FollowSerializer
 import random
 
+#Pagination to only load 24 pages
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 24
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsSetPagination
 
     @action(detail=False, methods=['get'])
     def random(self, request):

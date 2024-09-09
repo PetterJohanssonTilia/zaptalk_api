@@ -1,0 +1,9 @@
+tasks:
+  - name: Install Heroku CLI
+    init: |
+      curl https://cli-assets.heroku.com/install.sh | sh
+      heroku --version
+
+vscode:
+  extensions:
+    - ms-python.python
