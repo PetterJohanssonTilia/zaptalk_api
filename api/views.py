@@ -17,6 +17,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 class MovieViewSet(viewsets.ModelViewSet):
+    queryset = Movie.objects.all()
     serializer_class = MovieSerializer
     permission_classes = [AllowAny]
     pagination_class = StandardResultsSetPagination

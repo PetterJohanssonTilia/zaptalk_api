@@ -21,7 +21,8 @@ ALLOWED_HOSTS = [
     'zaptalk-api-c46804cb19e0.herokuapp.com',
     '8000-petterjohans-zaptalkapi-kqejqftrfwn.ws-eu116.gitpod.io',
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    '8000-petterjohans-zaptalkapi-crwv2ijg0nb.ws.codeinstitute-ide.net'
 ]
 
 # Application definition
