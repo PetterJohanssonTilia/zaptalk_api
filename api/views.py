@@ -8,7 +8,9 @@ from django.db.models import Q
 from .models import Movie, UserProfile, Like, Comment, Follow
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, FollowSerializer
 import random
+import logging
 
+logger = logging.getLogger(__name__)
 
 #Pagination to only load 24 pages
 class StandardResultsSetPagination(PageNumberPagination):
@@ -48,20 +50,37 @@ class LikeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def toggle_like(self, request):
-        user = request.user
-        movie_id = request.data.get('movie_id')
         try:
-            movie = Movie.objects.get(id=movie_id)
-        except Movie.DoesNotExist:
-            return Response({"detail": "Movie not found"}, status=status.HTTP_404_NOT_FOUND)
+            user = request.user
+            movie_id = request.data.get('movie_id')
+            
+            if not movie_id:
+                return Response({"detail": "movie_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                movie = Movie.objects.get(id=movie_id)
+            except Movie.DoesNotExist:
+                return Response({"detail": "Movie not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            like, created = Like.objects.get_or_create(user=user, movie=movie, defaults={'is_like': True})
+            
+            if not created:
+                # Toggle the Like if it already exists
+                like.is_like = not like.is_like
+                like.save()
+            
+            # Get the updated like count
+            likes_count = Like.objects.filter(movie=movie, is_like=True).count()
+            
+            return Response({
+                "is_like": like.is_like,
+                "likes_count": likes_count
+            })
         
-        like, created = Like.objects.get_or_create(user=user, movie=movie)
-        if not created:
-            like.is_like = not like.is_like
-            like.save()
-        
-        serializer = self.get_serializer(like)
-        return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in toggle_like: {str(e)}")
+            return Response({"detail": "An error occurred while processing your request"}, 
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
