@@ -1,8 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericRelation
+from django.utils import timezone
+
+#Creates a default content type for the likes that changes inside of comments/movies
+def get_default_content_type():
+    return ContentType.objects.get_for_model(Movie).id
 
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -28,8 +32,12 @@ class Movie(models.Model):
     thumbnail = models.URLField(max_length=500, default='https://example.com/placeholder.jpg')
     thumbnail_width = models.IntegerField(null=True, blank=True)
     thumbnail_height = models.IntegerField(null=True, blank=True)
-    likes = GenericRelation('Like')
+    likes = GenericRelation(Like, related_query_name='movie')
     
+    @staticmethod
+    def get_default_like_content_type():
+        return ContentType.objects.get_for_model(Movie)
+
     @property
     def likes_count(self):
         return self.likes.count()
@@ -50,7 +58,11 @@ class Comment(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    likes = GenericRelation('Like')
+    likes = GenericRelation(Like, related_query_name='comment')
+
+    @staticmethod
+    def get_default_like_content_type():
+        return ContentType.objects.get_for_model(Comment)
 
     def __str__(self):
         return f'Comment by {self.user.username} on {self.movie.title}'
