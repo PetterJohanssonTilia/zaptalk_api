@@ -5,7 +5,7 @@ from .models import Movie, UserProfile, Like, Comment, Follow
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
-        fields = fields = ['id', 'title', 'year', 'cast', 'genres', 'href', 'extract', 'thumbnail', 'thumbnail_width', 'thumbnail_height']
+        fields = fields = ['id', 'title', 'year', 'cast', 'genres', 'href', 'extract', 'thumbnail', 'thumbnail_width', 'thumbnail_height', 'likes_count']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

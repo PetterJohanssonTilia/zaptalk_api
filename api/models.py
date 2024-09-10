@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 class Movie(models.Model):
     title = models.CharField(max_length=200)
@@ -11,7 +13,12 @@ class Movie(models.Model):
     thumbnail = models.URLField(max_length=500, default='https://example.com/placeholder.jpg')
     thumbnail_width = models.IntegerField(null=True, blank=True)
     thumbnail_height = models.IntegerField(null=True, blank=True)
-
+    likes = GenericRelation(Like)
+    
+    @property
+    def likes_count(self):
+        return self.likes.count()
+        
     def __str__(self):
         return self.title
 
@@ -24,11 +31,17 @@ class UserProfile(models.Model):
 
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    is_like = models.BooleanField()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    class Meta:
+        unique_together = ('user', 'content_type', 'object_id')
 
     def __str__(self):
-        return f"{self.user.username} {'likes' if self.is_like else 'dislikes'} {self.movie.title}"
+        return f"{self.user.username} likes {self.content_object}"
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

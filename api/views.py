@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .models import Movie, UserProfile, Like, Comment, Follow
@@ -52,31 +53,41 @@ class LikeViewSet(viewsets.ModelViewSet):
     def toggle_like(self, request):
         try:
             user = request.user
-            movie_id = request.data.get('movie_id')
-            
-            if not movie_id:
-                return Response({"detail": "movie_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            content_type = request.data.get('content_type')
+            object_id = request.data.get('object_id')
+
+            if not content_type or not object_id:
+                return Response({"detail": "content_type and object_id are required"}, 
+                                status=status.HTTP_400_BAD_REQUEST)
 
             try:
-                movie = Movie.objects.get(id=movie_id)
-            except Movie.DoesNotExist:
-                return Response({"detail": "Movie not found"}, status=status.HTTP_404_NOT_FOUND)
-            
-            like, created = Like.objects.get_or_create(user=user, movie=movie, defaults={'is_like': True})
-            
+                content_type = ContentType.objects.get(model=content_type)
+                content_object = content_type.get_object_for_this_type(id=object_id)
+            except (ContentType.DoesNotExist, content_type.model_class().DoesNotExist):
+                return Response({"detail": "Object not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            like, created = Like.objects.get_or_create(
+                user=user,
+                content_type=content_type,
+                object_id=object_id
+            )
+
             if not created:
-                # Toggle the Like if it already exists
-                like.is_like = not like.is_like
-                like.save()
-            
-            # Get the updated like count
-            likes_count = Like.objects.filter(movie=movie, is_like=True).count()
-            
+                like.delete()
+                is_liked = False
+            else:
+                is_liked = True
+
+            likes_count = Like.objects.filter(
+                content_type=content_type,
+                object_id=object_id
+            ).count()
+
             return Response({
-                "is_like": like.is_like,
+                "is_liked": is_liked,
                 "likes_count": likes_count
             })
-        
+
         except Exception as e:
             logger.error(f"Error in toggle_like: {str(e)}")
             return Response({"detail": "An error occurred while processing your request"}, 
