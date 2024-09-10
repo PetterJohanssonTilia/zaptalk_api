@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericRelation
 
 class Movie(models.Model):
     title = models.CharField(max_length=200)
@@ -18,7 +19,7 @@ class Movie(models.Model):
     @property
     def likes_count(self):
         return self.likes.count()
-        
+
     def __str__(self):
         return self.title
 
@@ -45,12 +46,14 @@ class Like(models.Model):
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    likes = GenericRelation(Like)
 
     def __str__(self):
-        return f"{self.user.username} commented on {self.movie.title}"
+        return f'Comment by {self.user.username} on {self.movie.title}'
 
 class Follow(models.Model):
     follower = models.ForeignKey(User, related_name='following', on_delete=models.CASCADE)
