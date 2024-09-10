@@ -4,6 +4,20 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation
 
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    class Meta:
+        unique_together = ('user', 'content_type', 'object_id')
+
+    def __str__(self):
+        return f"{self.user.username} likes {self.content_object}"
+
 class Movie(models.Model):
     title = models.CharField(max_length=200)
     year = models.IntegerField(default=0)
@@ -14,7 +28,7 @@ class Movie(models.Model):
     thumbnail = models.URLField(max_length=500, default='https://example.com/placeholder.jpg')
     thumbnail_width = models.IntegerField(null=True, blank=True)
     thumbnail_height = models.IntegerField(null=True, blank=True)
-    likes = GenericRelation(Like)
+    likes = GenericRelation('Like')
     
     @property
     def likes_count(self):
@@ -30,27 +44,13 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
-class Like(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-
-    class Meta:
-        unique_together = ('user', 'content_type', 'object_id')
-
-    def __str__(self):
-        return f"{self.user.username} likes {self.content_object}"
-
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    likes = GenericRelation(Like)
+    likes = GenericRelation('Like')
 
     def __str__(self):
         return f'Comment by {self.user.username} on {self.movie.title}'
