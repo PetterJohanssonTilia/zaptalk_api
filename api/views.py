@@ -4,9 +4,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth.models import User
+from django.db.models import Q
 from .models import Movie, UserProfile, Like, Comment, Follow
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, FollowSerializer
 import random
+
 
 #Pagination to only load 24 pages
 class StandardResultsSetPagination(PageNumberPagination):
@@ -15,19 +17,23 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
     serializer_class = MovieSerializer
     permission_classes = [AllowAny]
     pagination_class = StandardResultsSetPagination
 
+    def get_queryset(self):
+        return Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
+
     @action(detail=False, methods=['get'])
     def random(self, request):
-        movies = list(Movie.objects.all())
-        if movies:
-            random_movie = random.choice(movies)
-            serializer = self.get_serializer(random_movie)
-            return Response(serializer.data)
-        return Response({"detail": "No movies available"}, status=status.HTTP_404_NOT_FOUND)
+        queryset = self.get_queryset()
+        count = queryset.count()
+        if count == 0:
+            return Response({"detail": "No movies with thumbnails available"}, status=status.HTTP_404_NOT_FOUND)
+        random_index = random.randint(0, count - 1)
+        random_movie = queryset[random_index]
+        serializer = self.get_serializer(random_movie)
+        return Response(serializer.data)
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
