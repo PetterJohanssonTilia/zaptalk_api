@@ -12,19 +12,6 @@ router.register(r'profiles', UserProfileViewSet)
 router.register(r'likes', LikeViewSet)
 router.register(r'comments', CommentViewSet)
 
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def api_root(request, format=None):
-    return Response({
-        'movies': reverse('movie-list', request=request, format=format),
-        'profiles': reverse('userprofile-list', request=request, format=format),
-        'likes': reverse('like-list', request=request, format=format),
-        'comments': reverse('comment-list', request=request, format=format),
-        'follows': reverse('follow-list', request=request, format=format),
-    })
-
 urlpatterns = [
-    path('', api_root, name='api-root'),
     path('', include(router.urls)),
 ]
