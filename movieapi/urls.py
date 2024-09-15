@@ -23,6 +23,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from dj_rest_auth.registration.views import RegisterView
 
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def api_root(request, format=None):
@@ -42,6 +43,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api-auth/', include('dj_rest_auth.urls')), #login button
     path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
+    path('api-auth/', include('rest_framework.urls'))#login button in the drf window
 ]
 
 """ path('api/', api_root, name='api-root'), """

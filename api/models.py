@@ -92,6 +92,7 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     likes = GenericRelation(Like, related_query_name='comment')
 
+
     @staticmethod
     def get_default_like_content_type():
         return ContentType.objects.get_for_model(Comment)

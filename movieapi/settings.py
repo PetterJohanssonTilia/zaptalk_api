@@ -163,7 +163,7 @@ if 'CLIENT_ORIGIN_DEV' in os.environ:
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS = [ "https://8000-petterjohans-zaptalkapi-crwv2ijg0nb.ws.codeinstitute-ide.net"]
 
 if 'CLIENT_ORIGIN' in os.environ:
     CSRF_TRUSTED_ORIGINS.append(os.environ.get('CLIENT_ORIGIN'))
@@ -189,6 +189,7 @@ JWT_AUTH_REFRESH_COOKIE = 'my-refresh-token'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
