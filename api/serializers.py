@@ -55,9 +55,20 @@ class LikeSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    movie = MovieSerializer(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    is_liked_by_user = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'movie', 'content', 'created_at']
+        fields = ['id', 'user', 'movie', 'content', 'created_at', 'updated_at', 'likes_count', 'is_liked_by_user']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'likes_count', 'is_liked_by_user']
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked_by_user(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
 
