@@ -13,7 +13,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email']
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
     comment_count = serializers.SerializerMethodField()
     total_likes_received = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
