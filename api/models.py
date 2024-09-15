@@ -15,7 +15,6 @@ class Like(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
     created_at = models.DateTimeField(auto_now_add=True)
     
-
     class Meta:
         unique_together = ('user', 'content_type', 'object_id')
 
@@ -48,7 +47,6 @@ class Movie(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
-
     def __str__(self):
         return self.user.username
 
@@ -73,3 +71,25 @@ class Follow(models.Model):
 
     def __str__(self):
         return f"{self.follower.username} follows {self.followed.username}"
+
+class Ban(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='ban')
+    banned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='bans_issued')
+    reason = models.TextField()
+    banned_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Ban for {self.user.username}"
+
+class BanAppeal(models.Model):
+    ban = models.ForeignKey(Ban, on_delete=models.CASCADE, related_name='appeals')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(null=True, default=None)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='ban_appeals_reviewed')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Appeal for {self.ban.user.username}'s ban"
