@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Movie, UserProfile, Like, Comment, Follow
+from .models import Movie, UserProfile, Like, Comment
 
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,7 +16,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     comment_count = serializers.SerializerMethodField()
     total_likes_received = serializers.SerializerMethodField()
-
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
+    
     class Meta:
         model = UserProfile
         fields = ['id', 'username', 'email', 'avatar', 'bio', 'location', 'birth_date', 'website', 
@@ -57,10 +60,3 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'user', 'movie', 'content', 'created_at']
 
-class FollowSerializer(serializers.ModelSerializer):
-    follower = UserSerializer(read_only=True)
-    followed = UserSerializer(read_only=True)
-
-    class Meta:
-        model = Follow
-        fields = ['id', 'follower', 'followed']

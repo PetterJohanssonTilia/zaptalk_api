@@ -4,6 +4,17 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from cloudinary.models import CloudinaryField
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.userprofile.save()
 
 #Creates a default content type for the likes that changes inside of comments/movies
 def get_default_content_type():
@@ -69,6 +80,9 @@ class UserProfile(models.Model):
 
     def get_following_count(self):
         return self.following.count()
+    
+    def is_following(self, user_to_check):
+        return self.following.filter(user=user_to_check).exists()
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -85,12 +99,6 @@ class Comment(models.Model):
     def __str__(self):
         return f'Comment by {self.user.username} on {self.movie.title}'
 
-class Follow(models.Model):
-    follower = models.ForeignKey(User, related_name='following', on_delete=models.CASCADE)
-    followed = models.ForeignKey(User, related_name='followers', on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.follower.username} follows {self.followed.username}"
 
 class Ban(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='ban')
