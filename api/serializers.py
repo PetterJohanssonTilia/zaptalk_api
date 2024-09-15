@@ -24,7 +24,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ['id', 'username', 'email', 'avatar', 'bio', 'location', 'birth_date', 'website', 
-                  'comment_count', 'total_likes_received', 'follower_count', 'following_count', 'is_following']
+                  'comment_count', 'total_likes_received', 'followers_count', 'following_count', 'is_following']
 
     def get_comment_count(self, obj):
         return obj.get_comment_count()
@@ -32,8 +32,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_total_likes_received(self, obj):
         return obj.get_total_likes_received()
 
-    def get_follower_count(self, obj):
-        return obj.get_follower_count()
+    def get_followers_count(self, obj):
+        return obj.get_followers_count()
 
     def get_following_count(self, obj):
         return obj.get_following_count()

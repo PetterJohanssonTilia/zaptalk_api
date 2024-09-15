@@ -75,7 +75,7 @@ class UserProfile(models.Model):
         comments = self.user.comment_set.all()
         return sum(comment.likes.count() for comment in comments)
     
-    def get_follower_count(self):
+    def get_followers_count(self):
         return self.followers.count()
 
     def get_following_count(self):
