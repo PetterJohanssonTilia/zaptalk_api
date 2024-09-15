@@ -7,6 +7,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django_filters import rest_framework as filters
 from .models import Movie, UserProfile, Like, Comment
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer
 import random
@@ -133,6 +134,13 @@ class LikeViewSet(viewsets.ModelViewSet):
             return Response({"detail": "An error occurred while processing your request"}, 
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class CommentFilter(filters.FilterSet):
+    movie = filters.NumberFilter(field_name="movie__id")
+
+    class Meta:
+        model = Comment
+        fields = ['movie']
+        
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
