@@ -8,7 +8,7 @@ from .views import MovieViewSet, UserProfileViewSet, LikeViewSet, CommentViewSet
 
 router = DefaultRouter()
 router.register(r'movies', MovieViewSet)
-router.register(r'profiles', UserProfileViewSet)
+router.register(r'profiles', UserProfileViewSet, basename='userprofile')
 router.register(r'likes', LikeViewSet)
 router.register(r'comments', CommentViewSet)
 
