@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 #Creates a default content type for the likes that changes inside of comments/movies
 def get_default_content_type():
@@ -46,9 +47,28 @@ class Movie(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    avatar = CloudinaryField('image', null=True, blank=True)
+    bio = models.TextField(max_length=500, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    website = models.URLField(max_length=200, blank=True)
+    followers = models.ManyToManyField('self', symmetrical=False, related_name='following')
 
     def __str__(self):
         return self.user.username
+    
+    def get_comment_count(self):
+        return self.user.comment_set.count()
+
+    def get_total_likes_received(self):
+        comments = self.user.comment_set.all()
+        return sum(comment.likes.count() for comment in comments)
+    
+    def get_follower_count(self):
+        return self.followers.count()
+
+    def get_following_count(self):
+        return self.following.count()
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

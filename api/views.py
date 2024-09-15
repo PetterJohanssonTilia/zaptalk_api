@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status
+from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -42,7 +43,45 @@ class MovieViewSet(viewsets.ModelViewSet):
 class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def follow(self, request, pk=None):
+        try:
+            user_to_follow = self.get_object()
+            user = request.user.userprofile
+
+            if user == user_to_follow:
+                return Response({"detail": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if user in user_to_follow.followers.all():
+                user_to_follow.followers.remove(user)
+                return Response({"detail": f"You have unfollowed {user_to_follow.user.username}."}, status=status.HTTP_200_OK)
+            else:
+                user_to_follow.followers.add(user)
+                return Response({"detail": f"You are now following {user_to_follow.user.username}."}, status=status.HTTP_200_OK)
+        except UserProfile.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def followers(self, request, pk=None):
+        user = self.get_object()
+        followers = user.followers.all()
+        serializer = self.get_serializer(followers, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def following(self, request, pk=None):
+        user = self.get_object()
+        following = user.following.all()
+        serializer = self.get_serializer(following, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def likes(self, request, pk=None):
+        user = self.get_object()
+        likes = Like.objects.filter(user=user.user)
+        serializer = LikeSerializer(likes, many=True)
+        return Response(serializer.data)
 
 class LikeViewSet(viewsets.ModelViewSet):
     queryset = Like.objects.all()
