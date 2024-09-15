@@ -28,7 +28,7 @@ def api_root(request, format=None):
     return Response({
         'movies': reverse('movie-list', request=request, format=format),
         'auth': reverse('rest_auth:rest_login', request=request, format=format),
-        'registration': reverse('rest_auth_registration:rest_register', request=request, format=format),
+        'registration': reverse('rest_register', request=request, format=format),
     })
 
 urlpatterns = [
@@ -37,7 +37,6 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', api_root, name='api-root'),
-    path('api-auth/', include('rest_framework.urls')), #login button
-    path('api/auth/', include('rest_auth.urls')),
-    path('api/auth/registration/', include('rest_auth.registration.urls')),
+    path('api-auth/', include('dj_rest_auth.urls')), #login button
+    path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
 ]
