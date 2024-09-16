@@ -77,7 +77,7 @@ class LikeSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'movie', 'is_like']
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    UserProfileSerializer(read_only=True)
     likes_count = serializers.SerializerMethodField()
     is_liked_by_user = serializers.SerializerMethodField()
 
