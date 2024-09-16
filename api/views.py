@@ -50,7 +50,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get', 'put', 'delete'], permission_classes=[IsAuthenticated])
     def me(self, request):
-        profile = request.user.userprofile
+        profile = request.user.profile
 
         if request.method == 'GET':
             serializer = self.get_serializer(profile)
@@ -83,7 +83,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     def follow(self, request, pk=None):
         try:
             user_to_follow = self.get_object()
-            user = request.user.userprofile
+            user = request.user.profile
 
             if user == user_to_follow:
                 return Response({"detail": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)

@@ -30,6 +30,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     is_following = serializers.SerializerMethodField()
     avatar = serializers.ImageField(required=False)
 
+
     class Meta:
         model = UserProfile
         fields = ['id', 'username', 'email', 'avatar', 'bio', 'location', 'birth_date', 'website', 
@@ -50,7 +51,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_is_following(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return request.user.userprofile in obj.followers.all()
+            return request.user.profile in obj.followers.all()
         return False
 
     def update(self, instance, validated_data):
