@@ -14,7 +14,7 @@ class MovieSerializer(serializers.ModelSerializer):
         fields = fields = ['id', 'title', 'year', 'cast', 'genres', 'href', 'extract', 'thumbnail', 'thumbnail_width', 'thumbnail_height', 'likes_count']
 
 class UserSerializer(serializers.ModelSerializer):
-    avatar = serializers.ImageField(required=False)
+    avatar = serializers.ImageField(source='profile.avatar', required=False, read_only=True)
 
     class Meta:
         model = User
