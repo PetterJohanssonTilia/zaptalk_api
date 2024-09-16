@@ -47,6 +47,12 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = [AllowAny]
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        profile = request.user.userprofile
+        serializer = self.get_serializer(profile, context={'request': request})
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def follow(self, request, pk=None):
         try:
