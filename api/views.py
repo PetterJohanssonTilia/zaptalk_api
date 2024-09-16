@@ -46,7 +46,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    permission_classes = [AllowAny]
     parser_classes = (MultiPartParser, FormParser)
 
     @action(detail=False, methods=['get', 'put', 'delete'], permission_classes=[IsAuthenticated])
@@ -58,11 +57,22 @@ class UserProfileViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
         elif request.method == 'PUT':
-            serializer = self.get_serializer(profile, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            logger.info(f"Received PUT request for user {request.user.username}")
+            logger.info(f"Request data: {request.data}")
+            
+            try:
+                serializer = self.get_serializer(profile, data=request.data, partial=True)
+                if serializer.is_valid():
+                    logger.info("Serializer is valid")
+                    updated_profile = serializer.save()
+                    logger.info(f"Profile updated successfully: {updated_profile}")
+                    return Response(serializer.data)
+                else:
+                    logger.error(f"Serializer errors: {serializer.errors}")
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                logger.exception(f"Error updating profile: {str(e)}")
+                return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         elif request.method == 'DELETE':
             user = request.user

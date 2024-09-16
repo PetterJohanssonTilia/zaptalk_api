@@ -49,10 +49,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return False
 
     def update(self, instance, validated_data):
+        logger.info(f"Updating profile for user: {instance.user.username}")
+        logger.info(f"Validated data: {validated_data}")
+        
         avatar = validated_data.pop('avatar', None)
         if avatar:
+            logger.info(f"Updating avatar: {avatar}")
             instance.avatar = avatar
-        return super().update(instance, validated_data)
+        
+        try:
+            updated_instance = super().update(instance, validated_data)
+            logger.info(f"Profile updated successfully: {updated_instance}")
+            return updated_instance
+        except Exception as e:
+            logger.exception(f"Error updating profile: {str(e)}")
+            raise serializers.ValidationError(f"Error updating profile: {str(e)}")
 
 class LikeSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
