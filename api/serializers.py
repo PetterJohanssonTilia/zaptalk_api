@@ -4,6 +4,9 @@ from .models import Movie, UserProfile, Like, Comment
 #Needed for cloudinary Avatar
 from django.core.files.base import ContentFile
 import base64
+import logging
+
+logger = logging.getLogger('zaptalk_api.api')
 
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:

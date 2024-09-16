@@ -15,7 +15,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import random
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('zaptalk_api.api')
 
 #Pagination to only load 24 pages
 class StandardResultsSetPagination(PageNumberPagination):
