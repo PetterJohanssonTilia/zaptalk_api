@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Movie, UserProfile, Like, Comment
+#Needed for cloudinary Avatar
+from django.core.files.base import ContentFile
+import base64
 
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +23,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
-    
+    avatar = serializers.ImageField(required=False)
+
     class Meta:
         model = UserProfile
         fields = ['id', 'username', 'email', 'avatar', 'bio', 'location', 'birth_date', 'website', 
@@ -44,6 +48,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return request.user.userprofile in obj.followers.all()
         return False
 
+    def update(self, instance, validated_data):
+        avatar = validated_data.pop('avatar', None)
+        if avatar:
+            instance.avatar = avatar
+        return super().update(instance, validated_data)
 
 class LikeSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

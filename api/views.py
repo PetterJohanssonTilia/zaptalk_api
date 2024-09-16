@@ -11,6 +11,7 @@ from django.db.models import Q
 from django_filters import rest_framework as filters
 from .models import Movie, UserProfile, Like, Comment
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 import random
 import logging
 
@@ -46,6 +47,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [AllowAny]
+    parser_classes = (MultiPartParser, FormParser)
 
     @action(detail=False, methods=['get', 'put', 'delete'], permission_classes=[IsAuthenticated])
     def me(self, request):
@@ -64,7 +66,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
         elif request.method == 'DELETE':
             user = request.user
-            user.delete()  # This will also delete the associated profile due to the CASCADE relationship
+            user.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
