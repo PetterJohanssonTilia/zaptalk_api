@@ -128,10 +128,11 @@ class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     likes_count = serializers.SerializerMethodField()
     is_liked_by_user = serializers.SerializerMethodField()
+    movie_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'movie', 'content', 'created_at', 'updated_at', 'likes_count', 'is_liked_by_user']
+        fields = ['id', 'user', 'movie', 'content', 'created_at', 'updated_at', 'likes_count', 'is_liked_by_user', 'movie_details']
         read_only_fields = ['id', 'created_at', 'updated_at', 'likes_count', 'is_liked_by_user']
 
     def get_likes_count(self, obj):
@@ -142,4 +143,20 @@ class CommentSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.likes.filter(user=request.user).exists()
         return False
+
+    def get_movie_details(self, obj):
+        if obj.movie:
+            return {
+                'id': obj.movie.id,
+                'title': obj.movie.title,
+                'thumbnail': obj.movie.thumbnail if hasattr(obj.movie, 'thumbnail') else None
+            }
+        return None
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        user_representation = representation['user']
+        if user_representation and 'profile' in user_representation:
+            user_representation['avatar'] = user_representation['profile'].get('avatar')
+        return representation
 
