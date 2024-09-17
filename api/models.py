@@ -8,13 +8,11 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.userprofile.save()
+    else:
+        instance.profile.save()
 
 #Creates a default content type for the likes that changes inside of comments/movies
 def get_default_content_type():
@@ -83,7 +81,10 @@ class UserProfile(models.Model):
     
     def is_following(self, user_to_check):
         return self.following.filter(user=user_to_check).exists()
-
+    
+    def is_banned(self):
+        return hasattr(self.user, 'ban') and self.user.ban.is_active
+        
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='comments')

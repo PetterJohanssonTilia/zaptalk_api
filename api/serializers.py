@@ -30,12 +30,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     following_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
     avatar = serializers.ImageField(required=False)
-
+    is_superuser = serializers.SerializerMethodField()
+    is_banned = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
         fields = ['user_id', 'id', 'username', 'email', 'avatar', 'bio', 'location', 'birth_date', 'website', 
-                  'comment_count', 'total_likes_received', 'followers_count', 'following_count', 'is_following']
+                  'comment_count', 'total_likes_received', 'followers_count', 'following_count', 'is_following', 'is_superuser', 'is_banned']
 
     def get_comment_count(self, obj):
         return obj.get_comment_count()
@@ -55,6 +56,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return request.user.profile in obj.followers.all()
         return False
 
+    def get_is_superuser(self, obj):
+        return obj.user.is_superuser
+
+    def get_is_banned(self, obj):
+        return obj.is_banned()
+        
     def update(self, instance, validated_data):
         logger.info(f"Updating profile for user: {instance.user.username}")
         logger.info(f"Validated data: {validated_data}")
