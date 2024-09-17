@@ -48,10 +48,24 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
     parser_classes = (MultiPartParser, FormParser)
 
+    def get_object(self):
+        queryset = self.get_queryset()
+        lookup_value = self.kwargs.get(self.lookup_field)
+        
+        if lookup_value.isdigit():
+            # If the lookup value is a number, try to fetch by ID
+            obj = get_object_or_404(queryset, pk=lookup_value)
+        else:
+            # If it's not a number, try to fetch by username
+            obj = get_object_or_404(queryset, user__username=lookup_value)
+        
+        self.check_object_permissions(self.request, obj)
+        return obj
+
     @action(detail=False, methods=['get', 'put', 'delete'], permission_classes=[IsAuthenticated])
     def me(self, request):
         profile = request.user.profile
-
+        
         if request.method == 'GET':
             serializer = self.get_serializer(profile)
             return Response(serializer.data)

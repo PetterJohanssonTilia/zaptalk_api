@@ -21,6 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'avatar']
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
     comment_count = serializers.SerializerMethodField()
@@ -33,7 +34,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['id', 'username', 'email', 'avatar', 'bio', 'location', 'birth_date', 'website', 
+        fields = ['user_id', 'id', 'username', 'email', 'avatar', 'bio', 'location', 'birth_date', 'website', 
                   'comment_count', 'total_likes_received', 'followers_count', 'following_count', 'is_following']
 
     def get_comment_count(self, obj):
