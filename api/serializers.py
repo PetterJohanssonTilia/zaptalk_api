@@ -73,12 +73,30 @@ class UserProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"Error updating profile: {str(e)}")
 
 class LikeSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    movie = MovieSerializer(read_only=True)
+    user = serializers.SerializerMethodField()
+    movie = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Like
-        fields = ['id', 'user', 'movie', 'is_like']
+        fields = ['id', 'user', 'movie', 'created_at']
+
+    def get_user(self, obj):
+        return {
+            'id': obj.user.id,
+            'username': obj.user.username,
+            'email': obj.user.email,
+            'avatar': obj.user.profile.avatar.url if obj.user.profile.avatar else None
+        }
+
+    def get_movie(self, obj):
+        if obj.content_type == ContentType.objects.get_for_model(Movie):
+            movie = obj.content_object
+            return {
+                'id': movie.id,
+                'title': movie.title
+            }
+        return None
 
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

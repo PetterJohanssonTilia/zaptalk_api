@@ -138,6 +138,12 @@ class LikeViewSet(viewsets.ModelViewSet):
     serializer_class = LikeSerializer
     permission_classes = [IsAuthenticated]
 
+    def list(self, request):
+        movie_content_type = ContentType.objects.get_for_model(Movie)
+        likes = Like.objects.filter(content_type=movie_content_type).order_by('-created_at')
+        serializer = self.get_serializer(likes, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'])
     def toggle_like(self, request):
         try:
