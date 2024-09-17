@@ -74,27 +74,44 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class LikeSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
-    movie = serializers.SerializerMethodField()
+    content_object = serializers.SerializerMethodField()
+    content_type = serializers.SerializerMethodField()
+    object_id = serializers.IntegerField()
     created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Like
-        fields = ['id', 'user', 'movie', 'created_at']
+        fields = ['id', 'user', 'content_type', 'object_id', 'content_object', 'created_at']
 
     def get_user(self, obj):
         return {
             'id': obj.user.id,
             'username': obj.user.username,
             'email': obj.user.email,
-            'avatar': obj.user.profile.avatar.url if obj.user.profile.avatar else None
+            'avatar': obj.user.profile.avatar.url if hasattr(obj.user, 'profile') and obj.user.profile.avatar else None
         }
 
-    def get_movie(self, obj):
-        if obj.content_type == ContentType.objects.get_for_model(Movie):
+    def get_content_type(self, obj):
+        if obj.content_type == Movie.get_default_like_content_type():
+            return 'movie'
+        elif obj.content_type == Comment.get_default_like_content_type():
+            return 'comment'
+        return None
+
+    def get_content_object(self, obj):
+        if obj.content_type == Movie.get_default_like_content_type():
             movie = obj.content_object
             return {
                 'id': movie.id,
-                'title': movie.title
+                'title': movie.title,
+                'type': 'movie'
+            }
+        elif obj.content_type == Comment.get_default_like_content_type():
+            comment = obj.content_object
+            return {
+                'id': comment.id,
+                'content': comment.content[:50] + '...' if len(comment.content) > 50 else comment.content,
+                'type': 'comment'
             }
         return None
 

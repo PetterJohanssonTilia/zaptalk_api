@@ -139,27 +139,37 @@ class LikeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        movie_content_type = ContentType.objects.get_for_model(Movie)
-        likes = Like.objects.filter(content_type=movie_content_type).order_by('-created_at')
-        serializer = self.get_serializer(likes, many=True)
-        return Response(serializer.data)
+        try:
+            likes = Like.objects.filter(
+                content_type__in=[
+                    Movie.get_default_like_content_type(),
+                    Comment.get_default_like_content_type()
+                ]
+            ).order_by('-created_at')
+            serializer = self.get_serializer(likes, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in LikeViewSet list: {str(e)}")
+            return Response({"detail": "An error occurred while fetching likes"}, 
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'])
     def toggle_like(self, request):
         try:
             user = request.user
-            content_type = request.data.get('content_type')
+            content_type_str = request.data.get('content_type')
             object_id = request.data.get('object_id')
 
-            if not content_type or not object_id:
+            if not content_type_str or not object_id:
                 return Response({"detail": "content_type and object_id are required"}, 
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            try:
-                content_type = ContentType.objects.get(model=content_type)
-                content_object = content_type.get_object_for_this_type(id=object_id)
-            except (ContentType.DoesNotExist, content_type.model_class().DoesNotExist):
-                return Response({"detail": "Object not found"}, status=status.HTTP_404_NOT_FOUND)
+            if content_type_str == 'movie':
+                content_type = Movie.get_default_like_content_type()
+            elif content_type_str == 'comment':
+                content_type = Comment.get_default_like_content_type()
+            else:
+                return Response({"detail": "Invalid content_type"}, status=status.HTTP_400_BAD_REQUEST)
 
             like, created = Like.objects.get_or_create(
                 user=user,
