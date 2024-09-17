@@ -79,10 +79,11 @@ class LikeSerializer(serializers.ModelSerializer):
     object_id = serializers.IntegerField()
     created_at = serializers.DateTimeField(read_only=True)
     movie_title = serializers.SerializerMethodField()
+    movie_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Like
-        fields = ['id', 'user', 'content_type', 'object_id', 'content_object', 'created_at', 'movie_title']
+        fields = ['id', 'user', 'content_type', 'object_id', 'content_object', 'created_at', 'movie_title', 'movie_details']
 
     def get_user(self, obj):
         return {
@@ -122,6 +123,22 @@ class LikeSerializer(serializers.ModelSerializer):
             return obj.content_object.title
         elif obj.content_type == Comment.get_default_like_content_type():
             return obj.content_object.movie.title if obj.content_object.movie else None
+        return None
+
+    def get_movie_details(self, obj):
+        if obj.content_type == Movie.get_default_like_content_type():
+            movie = obj.content_object
+        elif obj.content_type == Comment.get_default_like_content_type():
+            movie = obj.content_object.movie
+        else:
+            return None
+
+        if movie:
+            return {
+                'id': movie.id,
+                'title': movie.title,
+                'thumbnail': movie.thumbnail if hasattr(movie, 'thumbnail') else None
+            }
         return None
 
 class CommentSerializer(serializers.ModelSerializer):
