@@ -78,10 +78,11 @@ class LikeSerializer(serializers.ModelSerializer):
     content_type = serializers.SerializerMethodField()
     object_id = serializers.IntegerField()
     created_at = serializers.DateTimeField(read_only=True)
+    movie_title = serializers.SerializerMethodField()
 
     class Meta:
         model = Like
-        fields = ['id', 'user', 'content_type', 'object_id', 'content_object', 'created_at']
+        fields = ['id', 'user', 'content_type', 'object_id', 'content_object', 'created_at', 'movie_title']
 
     def get_user(self, obj):
         return {
@@ -111,8 +112,16 @@ class LikeSerializer(serializers.ModelSerializer):
             return {
                 'id': comment.id,
                 'content': comment.content[:50] + '...' if len(comment.content) > 50 else comment.content,
-                'type': 'comment'
+                'type': 'comment',
+                'movie_id': comment.movie.id if comment.movie else None
             }
+        return None
+
+    def get_movie_title(self, obj):
+        if obj.content_type == Movie.get_default_like_content_type():
+            return obj.content_object.title
+        elif obj.content_type == Comment.get_default_like_content_type():
+            return obj.content_object.movie.title if obj.content_object.movie else None
         return None
 
 class CommentSerializer(serializers.ModelSerializer):
