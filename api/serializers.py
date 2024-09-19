@@ -1,11 +1,15 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from .models import Ban, UserProfile
+from django.contrib.auth import get_user_model
 from .models import Movie, UserProfile, Like, Comment,  Ban
 #Needed for cloudinary Avatar
 from django.core.files.base import ContentFile
 import base64
 import logging
 
+
+User = get_user_model()
 logger = logging.getLogger('zaptalk_api.api')
 
 class MovieSerializer(serializers.ModelSerializer):
@@ -185,16 +189,33 @@ class CommentSerializer(serializers.ModelSerializer):
         return representation
 
 class BanSerializer(serializers.ModelSerializer):
-    banned_by_username = serializers.CharField(source='banned_by.username', read_only=True)
+    username = serializers.CharField(write_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
     user_username = serializers.CharField(source='user.username', read_only=True)
+    banned_by_username = serializers.CharField(source='banned_by.username', read_only=True)
+    banned_by_id = serializers.IntegerField(source='banned_by.id', read_only=True)
 
     class Meta:
         model = Ban
-        fields = ['id', 'user', 'user_username', 'banned_by', 'banned_by_username', 'reason', 'banned_at', 'expires_at', 'is_active']
-        read_only_fields = ['id', 'user', 'banned_by', 'banned_at']
+        fields = ['id', 'username', 'user_id', 'user_username', 'banned_by_id', 'banned_by_username', 'reason', 'banned_at', 'expires_at', 'is_active']
+        read_only_fields = ['id', 'user_id', 'user_username', 'banned_by_id', 'banned_by_username', 'banned_at']
 
     def create(self, validated_data):
-        user = validated_data['user']
+        username = validated_data.pop('username')
+        user = User.objects.filter(username=username).first()
+        if not user:
+            raise serializers.ValidationError(f"User with username '{username}' does not exist.")
+        
+        validated_data['user'] = user
+        validated_data['banned_by'] = self.context['request'].user
+        
+        # Set the user's is_active to False
         user.is_active = False
         user.save()
+        
         return super().create(validated_data)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['is_active'] = instance.user.is_active
+        return representation

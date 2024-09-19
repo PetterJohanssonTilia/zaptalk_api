@@ -235,30 +235,17 @@ class BanViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def ban_user(self, request):
-        username = request.data.get('username')
-        reason = request.data.get('reason')
-        
-        try:
-            user_to_ban = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-        if Ban.objects.filter(user=user_to_ban, is_active=True).exists():
-            return Response({"message": "User is already banned."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer = self.get_serializer(data={
-            'user': user_to_ban.id,
-            'banned_by': request.user.id,
-            'reason': reason
-        })
-        
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            ban = serializer.save()
+            return Response({
+                "message": f"User {ban.user.username} banned successfully",
+                "ban": serializer.data
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
     def active_bans(self, request):
-        bans = Ban.objects.filter(is_active=True)
-        serializer = self.get_serializer(bans, many=True)
+        active_bans = Ban.objects.filter(is_active=True)
+        serializer = self.get_serializer(active_bans, many=True)
         return Response(serializer.data)
