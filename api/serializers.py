@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Movie, UserProfile, Like, Comment
+from .models import Movie, UserProfile, Like, Comment,  Ban
 #Needed for cloudinary Avatar
 from django.core.files.base import ContentFile
 import base64
@@ -184,3 +184,17 @@ class CommentSerializer(serializers.ModelSerializer):
             user_representation['avatar'] = user_representation['profile'].get('avatar')
         return representation
 
+class BanSerializer(serializers.ModelSerializer):
+    banned_by_username = serializers.CharField(source='banned_by.username', read_only=True)
+    user_username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Ban
+        fields = ['id', 'user', 'user_username', 'banned_by', 'banned_by_username', 'reason', 'banned_at', 'expires_at', 'is_active']
+        read_only_fields = ['id', 'user', 'banned_by', 'banned_at']
+
+    def create(self, validated_data):
+        user = validated_data['user']
+        user.is_active = False
+        user.save()
+        return super().create(validated_data)

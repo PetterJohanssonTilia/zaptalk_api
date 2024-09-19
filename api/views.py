@@ -10,9 +10,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django_filters import rest_framework as filters
-from .models import Movie, UserProfile, Like, Comment
-from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer
-from rest_framework.parsers import MultiPartParser, FormParser
+from .models import Movie, UserProfile, Like, Commentfrom, Ban
+from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, BanSerializer
 import random
 import logging
 
@@ -132,6 +131,12 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         likes = Like.objects.filter(user=user.user)
         serializer = LikeSerializer(likes, many=True)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def is_banned(self, request, pk=None):
+        profile = self.get_object()
+        is_banned = Ban.objects.filter(user=profile.user, is_active=True).exists()
+        return Response({'is_banned': is_banned})
 
 class LikeViewSet(viewsets.ModelViewSet):
     queryset = Like.objects.all()
@@ -220,3 +225,39 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Assign the authenticated user to the comment
         serializer.save(user=self.request.user)
+
+# Bans
+class BanViewSet(viewsets.ModelViewSet):
+    queryset = Ban.objects.all()
+    serializer_class = BanSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @action(detail=False, methods=['post'])
+    def ban_user(self, request):
+        username = request.data.get('username')
+        reason = request.data.get('reason')
+        
+        try:
+            user_to_ban = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if Ban.objects.filter(user=user_to_ban, is_active=True).exists():
+            return Response({"message": "User is already banned."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = self.get_serializer(data={
+            'user': user_to_ban.id,
+            'banned_by': request.user.id,
+            'reason': reason
+        })
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'])
+    def active_bans(self, request):
+        bans = Ban.objects.filter(is_active=True)
+        serializer = self.get_serializer(bans, many=True)
+        return Response(serializer.data)
