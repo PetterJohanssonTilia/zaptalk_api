@@ -252,6 +252,24 @@ class BanViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(active_bans, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['post'])
+    def unban_user(self, request):
+        username = request.data.get('username')
+        user = User.objects.filter(username=username).first()
+        if not user:
+            return Response({"message": f"User {username} not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        ban = Ban.objects.filter(user=user, is_active=True).first()
+        if not ban:
+            return Response({"message": f"No active ban found for user {username}"}, status=status.HTTP_404_NOT_FOUND)
+        
+        ban.is_active = False
+        ban.save()
+        user.is_active = True
+        user.save()
+        
+        return Response({"message": f"User {username} has been unbanned successfully"}, status=status.HTTP_200_OK)
+
 class BanAppealViewSet(viewsets.ModelViewSet):
     queryset = BanAppeal.objects.all()
     serializer_class = BanAppealSerializer
