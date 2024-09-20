@@ -48,8 +48,11 @@ class MovieFilter(filters.FilterSet):
 
     def filter_genres(self, queryset, name, value):
         genres = [genre.strip().lower() for genre in value.split(',') if genre.strip()]
+        logger.info(f"Filtering for genres: {genres}")
         if genres:
-            return queryset.filter(genres__name__iregex=r'|'.join(genres)).distinct()
+            filtered = queryset.filter(genres__name__iregex=r'|'.join(genres)).distinct()
+            logger.info(f"Filtered queryset count: {filtered.count()}")
+            return filtered
         return queryset
 
     def search_movies(self, queryset, name, value):
