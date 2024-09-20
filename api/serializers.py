@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Ban, UserProfile
 from django.contrib.auth import get_user_model
-from .models import Movie, UserProfile, Like, Comment,  Ban
+from .models import Movie, UserProfile, Like, Comment,  Ban, BanAppeal
 #Needed for cloudinary Avatar
 from django.core.files.base import ContentFile
 import base64
@@ -219,3 +219,33 @@ class BanSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['is_active'] = instance.user.is_active
         return representation
+
+class BanAppealSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(write_only=True)
+    email = serializers.EmailField(write_only=True)
+    user_username = serializers.CharField(source='ban.user.username', read_only=True)
+
+    class Meta:
+        model = BanAppeal
+        fields = ['id', 'username', 'email', 'user_username', 'content', 'created_at', 'is_approved']
+        read_only_fields = ['id', 'user_username', 'created_at', 'is_approved']
+
+    def create(self, validated_data):
+        username = validated_data.pop('username')
+        email = validated_data.pop('email')
+        user = User.objects.filter(username=username).first()
+        if not user:
+            raise serializers.ValidationError(f"User with username '{username}' does not exist.")
+        
+        active_ban = Ban.objects.filter(user=user, is_active=True).first()
+        if not active_ban:
+            raise serializers.ValidationError(f"No active ban found for user '{username}'.")
+        
+        validated_data['ban'] = active_ban
+        
+        # Update user's email if it has changed
+        if user.email != email:
+            user.email = email
+            user.save()
+        
+        return super().create(validated_data)

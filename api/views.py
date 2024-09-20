@@ -11,8 +11,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django_filters import rest_framework as filters
-from .models import Movie, UserProfile, Like, Comment, Ban
-from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, BanSerializer
+from .models import Movie, UserProfile, Like, Comment, Ban, BanAppeal
+from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, BanSerializer, BanAppealSerializer
 import random
 import logging
 
@@ -29,6 +29,8 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
     permission_classes = [AllowAny]
     pagination_class = StandardResultsSetPagination
+
+    
 
     def get_queryset(self):
         return Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
@@ -249,3 +251,17 @@ class BanViewSet(viewsets.ModelViewSet):
         active_bans = Ban.objects.filter(is_active=True)
         serializer = self.get_serializer(active_bans, many=True)
         return Response(serializer.data)
+
+class BanAppealViewSet(viewsets.ModelViewSet):
+    queryset = BanAppeal.objects.all()
+    serializer_class = BanAppealSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response({
+                "message": "Ban appeal submitted successfully",
+                "appeal": serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
