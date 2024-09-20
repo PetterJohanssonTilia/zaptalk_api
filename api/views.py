@@ -10,7 +10,7 @@ from django_filters import rest_framework as filters
 from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Case, When, IntegerField
 from django_filters import rest_framework as filters
 from .models import Movie, UserProfile, Like, Comment, Ban, BanAppeal
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, BanSerializer, BanAppealSerializer
@@ -47,8 +47,10 @@ class MovieFilter(filters.FilterSet):
         fields = ['genres', 'search', 'sort', 'followed_likes']
 
     def filter_genres(self, queryset, name, value):
-        genres = [genre.strip().lower() for genre in value.split(',')]
-        return queryset.filter(genres__name__iregex=r'|'.join(genres))
+        genres = [genre.strip().lower() for genre in value.split(',') if genre.strip()]
+        if genres:
+            return queryset.filter(genres__name__iregex=r'|'.join(genres)).distinct()
+        return queryset
 
     def search_movies(self, queryset, name, value):
         return queryset.filter(Q(title__icontains=value) | Q(extract__icontains=value))
@@ -59,6 +61,26 @@ class MovieFilter(filters.FilterSet):
         elif value == 'most_commented':
             return queryset.annotate(comment_count=Count('comments')).order_by('-comment_count')
         return queryset
+
+    def filter_followed_likes(self, queryset, name, value):
+        if value and self.request.user.is_authenticated:
+            followed_users = self.request.user.profile.following.values_list('user', flat=True)
+            return queryset.filter(likes__user__in=followed_users).distinct()
+        return queryset
+        
+    #Sorting method for movies in genres
+    def sort_movies(self, queryset, name, value):
+        if value == 'genres':
+            # Count the number of selected genres for each movie
+            selected_genres = self.request.query_params.get('genres', '').split(',')
+            return queryset.annotate(
+                matched_genres_count=Count(
+                    Case(
+                        When(genres__name__in=selected_genres, then=1),
+                        output_field=IntegerField()
+                    )
+                )
+            ).order_by('-matched_genres_count', 'title')
 
     # Filter for what movies your followers like
     def filter_followed_likes(self, queryset, name, value):
@@ -76,8 +98,24 @@ class MovieViewSet(viewsets.ModelViewSet):
     filterset_class = MovieFilter
 
     def get_queryset(self):
-        queryset = Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
-        return self.filterset_class(self.request.GET, queryset=queryset, request=self.request).qs
+        #Filter movies with thumbnails
+        base_queryset = Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
+         # Apply the filter class for filtering genres
+        filtered_queryset = self.filterset_class(self.request.GET, queryset=base_queryset, request=self.request).qs
+        
+        sort_param = self.request.query_params.get('sort', '')
+        if sort_param == 'genres':
+            selected_genres = self.request.query_params.get('genres', '').split(',')
+            return filtered_queryset.annotate(
+                matched_genres_count=Count(
+                    Case(
+                        When(genres__name__in=selected_genres, then=1),
+                        output_field=IntegerField()
+                    )
+                )
+            ).order_by('-matched_genres_count', 'title')
+        
+        return filtered_queryset
     
     #Get random movie
     @action(detail=False, methods=['get'])
