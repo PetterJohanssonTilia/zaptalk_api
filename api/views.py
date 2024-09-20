@@ -6,13 +6,15 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework as filters
 from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q, Count
 from django_filters import rest_framework as filters
 from .models import Movie, UserProfile, Like, Comment, Ban, BanAppeal
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, BanSerializer, BanAppealSerializer
+
 import random
 import logging
 
@@ -24,16 +26,47 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
+class MovieFilter(filters.FilterSet):
+    genres = filters.CharFilter(method='filter_genres')
+    search = filters.CharFilter(method='search_movies')
+    sort = filters.CharFilter(method='sort_movies')
+    followed_likes = filters.BooleanFilter(method='filter_followed_likes')
+
+    class Meta:
+        model = Movie
+        fields = ['genres', 'search', 'sort', 'followed_likes']
+
+    def filter_genres(self, queryset, name, value):
+        genres = value.split(',')
+        return queryset.filter(genres__name__in=genres)
+
+    def search_movies(self, queryset, name, value):
+        return queryset.filter(Q(title__icontains=value) | Q(description__icontains=value))
+
+    def sort_movies(self, queryset, name, value):
+        if value == 'most_liked':
+            return queryset.annotate(like_count=Count('likes')).order_by('-like_count')
+        elif value == 'most_commented':
+            return queryset.annotate(comment_count=Count('comments')).order_by('-comment_count')
+        return queryset
+
+    def filter_followed_likes(self, queryset, name, value):
+        if value and self.request.user.is_authenticated:
+            followed_users = self.request.user.profile.following.values_list('user', flat=True)
+            return queryset.filter(likes__user__in=followed_users).distinct()
+        return queryset
+
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
     permission_classes = [AllowAny]
     pagination_class = StandardResultsSetPagination
-
-    
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_class = MovieFilter
 
     def get_queryset(self):
-        return Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
+        queryset = Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
+        return self.filterset_class(self.request.GET, queryset=queryset, request=self.request).qs
 
     @action(detail=False, methods=['get'])
     def random(self, request):
@@ -96,7 +129,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
             user.delete()
 
             return Response(status=status.HTTP_204_NO_CONTENT)
-            
+
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def feed(self, request):
         user = request.user
