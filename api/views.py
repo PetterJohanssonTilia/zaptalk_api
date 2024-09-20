@@ -50,7 +50,6 @@ class MovieFilter(filters.FilterSet):
         genres = [genre.strip().lower() for genre in value.split(',') if genre.strip()]
         logger.info(f"Filtering for genres: {genres}")
         if genres:
-            # Create a Q object for each genre
             genre_q = Q()
             for genre in genres:
                 genre_q |= Q(genres__icontains=genre)
@@ -69,18 +68,7 @@ class MovieFilter(filters.FilterSet):
             return queryset.annotate(like_count=Count('likes')).order_by('-like_count')
         elif value == 'most_commented':
             return queryset.annotate(comment_count=Count('comments')).order_by('-comment_count')
-        return queryset
-
-    def filter_followed_likes(self, queryset, name, value):
-        if value and self.request.user.is_authenticated:
-            followed_users = self.request.user.profile.following.values_list('user', flat=True)
-            return queryset.filter(likes__user__in=followed_users).distinct()
-        return queryset
-        
-    #Sorting method for movies in genres
-    def sort_movies(self, queryset, name, value):
-        if value == 'genres':
-            # Count the number of selected genres for each movie
+        elif value == 'genres':
             selected_genres = self.request.query_params.get('genres', '').split(',')
             return queryset.annotate(
                 matched_genres_count=Count(
@@ -90,11 +78,12 @@ class MovieFilter(filters.FilterSet):
                     )
                 )
             ).order_by('-matched_genres_count', 'title')
+        return queryset
 
-    # Filter for what movies your followers like
+    # Users you follow likes these movies
     def filter_followed_likes(self, queryset, name, value):
         if value and self.request.user.is_authenticated:
-            followed_users = self.request.user.profile.following.all()
+            followed_users = self.request.user.profile.following.values_list('user', flat=True)
             return queryset.filter(likes__user__in=followed_users).distinct()
         return queryset
 
@@ -107,12 +96,19 @@ class MovieViewSet(viewsets.ModelViewSet):
     filterset_class = MovieFilter
 
     def get_queryset(self):
-        #Filter movies with thumbnails
+        # Filter movies with thumbnails
         base_queryset = Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
+        
+        # Annotate with likes_count and comments_count
+        base_queryset = base_queryset.annotate(
+            likes_count=Count('likes'),
+            comments_count=Count('comments')
+        )
+        
         logger.info(f"Base queryset count: {base_queryset.count()}")
         logger.info(f"Request parameters: {self.request.query_params}")
 
-         # Apply the filter class for filtering genres
+        # Apply the filter class for filtering and sorting
         filtered_queryset = self.filterset_class(self.request.GET, queryset=base_queryset, request=self.request).qs
         logger.info(f"Filtered queryset count: {filtered_queryset.count()}")
         
@@ -120,25 +116,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         sample_movies = filtered_queryset[:5]
         logger.info("Sample movies from filtered queryset:")
         for movie in sample_movies:
-            logger.info(f"- {movie.title} (Genres: {movie.genres})")
+            logger.info(f"- {movie.title} (Genres: {movie.genres}, Likes: {movie.likes_count}, Comments: {movie.comments_count})")
 
-
-        
-        sort_param = self.request.query_params.get('sort', '')
-        if sort_param == 'genres':
-            selected_genres = self.request.query_params.get('genres', '').split(',')
-            return filtered_queryset.annotate(
-                matched_genres_count=Count(
-                    Case(
-                        When(genres__name__in=selected_genres, then=1),
-                        output_field=IntegerField()
-                    )
-                )
-            ).order_by('-matched_genres_count', 'title')
-        
         return filtered_queryset
     
-    #Get random movie
+    # Get random movie
     @action(detail=False, methods=['get'])
     def random(self, request):
         queryset = self.get_queryset()
@@ -149,7 +131,8 @@ class MovieViewSet(viewsets.ModelViewSet):
         random_movie = queryset[random_index]
         serializer = self.get_serializer(random_movie)
         return Response(serializer.data)
-    #Logger information - remove this later
+
+    # Logger information - remove this later
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         logger.info(f"Filtered queryset count: {queryset.count()}")
