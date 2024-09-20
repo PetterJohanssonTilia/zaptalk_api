@@ -94,7 +94,28 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         elif request.method == 'DELETE':
             user = request.user
             user.delete()
+
             return Response(status=status.HTTP_204_NO_CONTENT)
+            
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def feed(self, request):
+        user = request.user
+        following = user.profile.following.all()
+        following_users = [profile.user for profile in following]
+        
+        comments = Comment.objects.filter(user__in=following_users).order_by('-created_at')
+        likes = Like.objects.filter(user__in=following_users).order_by('-created_at')
+        
+        comments_serializer = CommentSerializer(comments, many=True, context={'request': request})
+        likes_serializer = LikeSerializer(likes, many=True)
+        
+        feed_items = sorted(
+            comments_serializer.data + likes_serializer.data,
+            key=lambda x: x['created_at'],
+            reverse=True
+        )
+        
+        return Response(feed_items)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def follow(self, request, pk=None):
