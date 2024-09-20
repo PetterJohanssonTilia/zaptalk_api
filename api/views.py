@@ -50,7 +50,13 @@ class MovieFilter(filters.FilterSet):
         genres = [genre.strip().lower() for genre in value.split(',') if genre.strip()]
         logger.info(f"Filtering for genres: {genres}")
         if genres:
-            filtered = queryset.filter(genres__name__iregex=r'|'.join(genres)).distinct()
+            # Create a Q object for each genre
+            genre_q = Q()
+            for genre in genres:
+                genre_q |= Q(genres__icontains=genre)
+            
+            filtered = queryset.filter(genre_q).distinct()
+            logger.info(f"SQL Query: {filtered.query}")
             logger.info(f"Filtered queryset count: {filtered.count()}")
             return filtered
         return queryset
@@ -103,8 +109,20 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         #Filter movies with thumbnails
         base_queryset = Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
+        logger.info(f"Base queryset count: {base_queryset.count()}")
+        logger.info(f"Request parameters: {self.request.query_params}")
+
          # Apply the filter class for filtering genres
         filtered_queryset = self.filterset_class(self.request.GET, queryset=base_queryset, request=self.request).qs
+        logger.info(f"Filtered queryset count: {filtered_queryset.count()}")
+        
+        # Log some sample movies from the filtered queryset - Remove later
+        sample_movies = filtered_queryset[:5]
+        logger.info("Sample movies from filtered queryset:")
+        for movie in sample_movies:
+            logger.info(f"- {movie.title} (Genres: {movie.genres})")
+
+
         
         sort_param = self.request.query_params.get('sort', '')
         if sort_param == 'genres':
