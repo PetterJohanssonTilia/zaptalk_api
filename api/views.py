@@ -47,11 +47,11 @@ class MovieFilter(filters.FilterSet):
         fields = ['genres', 'search', 'sort', 'followed_likes']
 
     def filter_genres(self, queryset, name, value):
-        genres = value.split(',')
-        return queryset.filter(genres__name__in=genres)
+        genres = [genre.strip().lower() for genre in value.split(',')]
+        return queryset.filter(genres__name__iregex=r'|'.join(genres))
 
     def search_movies(self, queryset, name, value):
-        return queryset.filter(Q(title__icontains=value) | Q(description__icontains=value))
+        return queryset.filter(Q(title__icontains=value) | Q(extract__icontains=value))
 
     def sort_movies(self, queryset, name, value):
         if value == 'most_liked':
@@ -63,7 +63,7 @@ class MovieFilter(filters.FilterSet):
     # Filter for what movies your followers like
     def filter_followed_likes(self, queryset, name, value):
         if value and self.request.user.is_authenticated:
-            followed_users = self.request.user.profile.following.values_list('user', flat=True)
+            followed_users = self.request.user.profile.following.all()
             return queryset.filter(likes__user__in=followed_users).distinct()
         return queryset
 
@@ -89,6 +89,21 @@ class MovieViewSet(viewsets.ModelViewSet):
         random_index = random.randint(0, count - 1)
         random_movie = queryset[random_index]
         serializer = self.get_serializer(random_movie)
+        return Response(serializer.data)
+    #Logger information - remove this later
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        logger.info(f"Filtered queryset count: {queryset.count()}")
+        logger.info(f"Request params: {request.query_params}")
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            logger.info(f"Serialized data length: {len(serializer.data)}")
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        logger.info(f"Serialized data length: {len(serializer.data)}")
         return Response(serializer.data)
 
 class UserProfileViewSet(viewsets.ModelViewSet):
