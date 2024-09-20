@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
-from .views import MovieViewSet, UserProfileViewSet, LikeViewSet, CommentViewSet, BanViewSet, BanAppealViewSet
+from .views import MovieViewSet, UserProfileViewSet, LikeViewSet, CommentViewSet, BanViewSet, BanAppealViewSet, get_genres
 
 router = DefaultRouter()
 router.register(r'movies', MovieViewSet)
@@ -16,4 +16,5 @@ router.register(r'ban-appeals', BanAppealViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('genres/', get_genres, name='get_genres'),  # This is only a function view and why it's not in the router.register
 ]

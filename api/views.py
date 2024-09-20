@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -19,6 +19,16 @@ import random
 import logging
 
 logger = logging.getLogger('zaptalk_api.api')
+
+#Get all the genres
+@api_view(['GET'])
+def get_genres(request):
+    genres = Movie.objects.values_list('genres', flat=True)
+    unique_genres = set()
+    for genre_list in genres:
+        if genre_list:  # Check if the list is not None
+            unique_genres.update(genre_list)
+    return Response(sorted(list(unique_genres)))
 
 #Pagination to only load 24 pages
 class StandardResultsSetPagination(PageNumberPagination):
@@ -50,6 +60,7 @@ class MovieFilter(filters.FilterSet):
             return queryset.annotate(comment_count=Count('comments')).order_by('-comment_count')
         return queryset
 
+    # Filter for what movies your followers like
     def filter_followed_likes(self, queryset, name, value):
         if value and self.request.user.is_authenticated:
             followed_users = self.request.user.profile.following.values_list('user', flat=True)
@@ -67,7 +78,8 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
         return self.filterset_class(self.request.GET, queryset=queryset, request=self.request).qs
-
+    
+    #Get random movie
     @action(detail=False, methods=['get'])
     def random(self, request):
         queryset = self.get_queryset()
