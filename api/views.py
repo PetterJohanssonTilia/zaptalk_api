@@ -259,19 +259,27 @@ class BanViewSet(viewsets.ModelViewSet):
         if not user:
             return Response({"message": f"User {username} not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        ban = Ban.objects.filter(user=user, is_active=True).first()
-        if not ban:
+        active_bans = Ban.objects.filter(user=user, is_active=True)
+        if not active_bans.exists():
             return Response({"message": f"No active ban found for user {username}"}, status=status.HTTP_404_NOT_FOUND)
         
-        ban.is_active = False
-        ban.save()
+        for ban in active_bans:
+            ban.is_active = False
+            ban.save()
+        
         user.is_active = True
         user.save()
         
-        return Response({"message": f"User {username} has been unbanned successfully"}, status=status.HTTP_200_OK)
+        # Resolve all active ban appeals for this user
+        active_appeals = BanAppeal.objects.filter(ban__user=user, is_resolved=False)
+        for appeal in active_appeals:
+            appeal.is_resolved = True
+            appeal.save()
+        
+        return Response({"message": f"User {username} has been unbanned successfully and all ban appeals have been resolved"}, status=status.HTTP_200_OK)
 
 class BanAppealViewSet(viewsets.ModelViewSet):
-    queryset = BanAppeal.objects.all()
+    queryset = BanAppeal.objects.filter(is_resolved=False)
     serializer_class = BanAppealSerializer
 
     def create(self, request, *args, **kwargs):

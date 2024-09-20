@@ -120,6 +120,7 @@ class BanAppeal(models.Model):
     ban = models.ForeignKey(Ban, on_delete=models.CASCADE, related_name='appeals')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    is_resolved = models.BooleanField(default=False)
     is_approved = models.BooleanField(null=True, default=None)
     reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='ban_appeals_reviewed')
     reviewed_at = models.DateTimeField(null=True, blank=True)

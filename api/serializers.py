@@ -224,11 +224,12 @@ class BanAppealSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True)
     email = serializers.EmailField(write_only=True)
     user_username = serializers.CharField(source='ban.user.username', read_only=True)
+    is_resolved = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = BanAppeal
-        fields = ['id', 'username', 'email', 'user_username', 'content', 'created_at', 'is_approved']
-        read_only_fields = ['id', 'user_username', 'created_at', 'is_approved']
+        fields = ['id', 'username', 'email', 'user_username', 'content', 'created_at', 'is_resolved']
+        read_only_fields = ['id', 'user_username', 'created_at', 'is_resolved']
 
     def create(self, validated_data):
         username = validated_data.pop('username')
