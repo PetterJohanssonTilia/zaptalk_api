@@ -13,9 +13,12 @@ User = get_user_model()
 logger = logging.getLogger('zaptalk_api.api')
 
 class MovieSerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(read_only=True)
+    comments_count = serializers.IntegerField(read_only=True)
+    
     class Meta:
         model = Movie
-        fields = fields = ['id', 'title', 'year', 'cast', 'genres', 'href', 'extract', 'thumbnail', 'thumbnail_width', 'thumbnail_height', 'likes_count']
+        fields = fields = ['id', 'title', 'year', 'cast', 'genres', 'href', 'extract', 'thumbnail', 'thumbnail_width', 'thumbnail_height', 'likes_count', 'comments_count']
 
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.ImageField(source='profile.avatar', required=False, read_only=True)

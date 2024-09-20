@@ -80,7 +80,6 @@ class MovieFilter(filters.FilterSet):
             ).order_by('-matched_genres_count', 'title')
         return queryset
 
-    # Users you follow likes these movies
     def filter_followed_likes(self, queryset, name, value):
         if value and self.request.user.is_authenticated:
             followed_users = self.request.user.profile.following.values_list('user', flat=True)
@@ -96,31 +95,22 @@ class MovieViewSet(viewsets.ModelViewSet):
     filterset_class = MovieFilter
 
     def get_queryset(self):
-        # Filter movies with thumbnails
         base_queryset = Movie.objects.filter(~Q(thumbnail__isnull=True) & ~Q(thumbnail__exact=''))
-        
-        # Annotate with likes_count and comments_count
-        base_queryset = base_queryset.annotate(
-            likes_count=Count('likes'),
-            comments_count=Count('comments')
-        )
-        
         logger.info(f"Base queryset count: {base_queryset.count()}")
         logger.info(f"Request parameters: {self.request.query_params}")
 
-        # Apply the filter class for filtering and sorting
+
+
         filtered_queryset = self.filterset_class(self.request.GET, queryset=base_queryset, request=self.request).qs
         logger.info(f"Filtered queryset count: {filtered_queryset.count()}")
         
-        # Log some sample movies from the filtered queryset - Remove later
         sample_movies = filtered_queryset[:5]
         logger.info("Sample movies from filtered queryset:")
         for movie in sample_movies:
-            logger.info(f"- {movie.title} (Genres: {movie.genres}, Likes: {movie.likes_count}, Comments: {movie.comments_count})")
+            logger.info(f"- {movie.title} (Genres: {movie.genres})")
 
         return filtered_queryset
     
-    # Get random movie
     @action(detail=False, methods=['get'])
     def random(self, request):
         queryset = self.get_queryset()
@@ -132,7 +122,6 @@ class MovieViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(random_movie)
         return Response(serializer.data)
 
-    # Logger information - remove this later
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         logger.info(f"Filtered queryset count: {queryset.count()}")
