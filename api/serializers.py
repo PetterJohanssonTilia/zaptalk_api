@@ -164,11 +164,11 @@ class LikeSerializer(serializers.ModelSerializer):
 
     #This is used for the feed page to get a like or a comment "Sandra Commented on x"
     def get_type(self, obj):
-    if obj.content_type == Movie.get_default_like_content_type():
-        return 'like'
-    elif obj.content_type == Comment.get_default_like_content_type():
-        return 'comment'
-    return None
+        if obj.content_type == Movie.get_default_like_content_type():
+            return 'like'
+        elif obj.content_type == Comment.get_default_like_content_type():
+            return 'comment'
+        return None
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     likes_count = serializers.SerializerMethodField()
