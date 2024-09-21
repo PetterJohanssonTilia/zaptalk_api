@@ -209,8 +209,11 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         comments_serializer = CommentSerializer(comments, many=True, context={'request': request})
         likes_serializer = LikeSerializer(likes, many=True)
         
+        comment_items = [dict(item, **{'type': 'comment'}) for item in comments_serializer.data]
+        like_items = [dict(item, **{'type': 'like'}) for item in likes_serializer.data]
+        
         feed_items = sorted(
-            comments_serializer.data + likes_serializer.data,
+            comment_items + like_items,
             key=lambda x: x['created_at'],
             reverse=True
         )
