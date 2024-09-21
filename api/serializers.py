@@ -104,7 +104,7 @@ class LikeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Like
-        fields = ['id', 'user', 'content_type', 'object_id', 'content_object', 'created_at', 'movie_title', 'movie_details']
+        fields = ['id', 'user', 'content_type', 'object_id', 'content_object', 'created_at', 'movie_title', 'movie_details', 'type']
 
     def get_user(self, obj):
         return {
