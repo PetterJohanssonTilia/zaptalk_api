@@ -10,7 +10,7 @@ from django_filters import rest_framework as filters
 from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
-from django.db.models import Q, Count, Case, When, IntegerField
+from django.db.models import Q, Count, Case, When, IntegerField, Subquery
 from django_filters import rest_framework as filters
 from .models import Movie, UserProfile, Like, Comment, Ban, BanAppeal
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, BanSerializer, BanAppealSerializer
@@ -99,9 +99,18 @@ class MovieViewSet(viewsets.ModelViewSet):
         logger.info(f"Base queryset count: {base_queryset.count()}")
         logger.info(f"Request parameters: {self.request.query_params}")
 
-
-
         filtered_queryset = self.filterset_class(self.request.GET, queryset=base_queryset, request=self.request).qs
+        
+        followed_likes = self.request.query_params.get('followed_likes', '').lower() == 'true'
+        if followed_likes and self.request.user.is_authenticated:
+            followed_users = self.request.user.profile.following.values_list('user', flat=True)
+            liked_movies = Like.objects.filter(
+                user__in=followed_users, 
+                content_type=ContentType.objects.get_for_model(Movie)
+            ).values_list('object_id', flat=True)
+            
+            filtered_queryset = filtered_queryset.filter(id__in=Subquery(liked_movies)).distinct()
+
         logger.info(f"Filtered queryset count: {filtered_queryset.count()}")
         
         sample_movies = filtered_queryset[:5]
