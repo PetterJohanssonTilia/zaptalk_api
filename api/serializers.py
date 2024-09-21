@@ -20,6 +20,12 @@ class MovieSerializer(serializers.ModelSerializer):
         model = Movie
         fields = fields = ['id', 'title', 'year', 'cast', 'genres', 'href', 'extract', 'thumbnail', 'thumbnail_width', 'thumbnail_height', 'likes_count', 'comments_count']
 
+    def get_likes_count(self, obj):
+        return obj.likes_count
+
+    def get_comments_count(self, obj):
+        return obj.comments_count
+
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.ImageField(source='profile.avatar', required=False, read_only=True)
 

@@ -53,6 +53,11 @@ class Movie(models.Model):
     @property
     def likes_count(self):
         return self.likes.count()
+    
+    @property
+    def comments_count(self):
+        from .models import Comment  # Import here to avoid circular import
+        return Comment.objects.filter(movie=self).count()
 
     def __str__(self):
         return self.title
