@@ -233,12 +233,36 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(followers, many=True)
         return Response(serializer.data)
 
+    # Following, shown on other users for example
     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
     def following(self, request, pk=None):
         user = self.get_object()
         following = user.following.all()
         serializer = self.get_serializer(following, many=True)
         return Response(serializer.data)
+
+    # List of users you follow, shown on your profile page
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def following_list(self, request, pk=None):
+        try:
+            if pk == 'me':
+                user_profile = request.user.profile
+            else:
+                user_profile = self.get_object()
+            
+            following = user_profile.following.all()
+            following_data = [
+                {
+                    'user_id': profile.user.id,
+                    'profile_id': profile.id,
+                    'username': profile.user.username,
+                    'avatar': profile.avatar.url if profile.avatar else None
+                }
+                for profile in following
+            ]
+            return Response(following_data, status=status.HTTP_200_OK)
+        except UserProfile.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
     def likes(self, request, pk=None):
