@@ -113,7 +113,8 @@ class LikeSerializer(serializers.ModelSerializer):
             'email': obj.user.email,
             'avatar': obj.user.profile.avatar.url if hasattr(obj.user, 'profile') and obj.user.profile.avatar else None
         }
-
+        
+    # Gets content type
     def get_content_type(self, obj):
         if obj.content_type == Movie.get_default_like_content_type():
             return 'movie'
@@ -121,6 +122,7 @@ class LikeSerializer(serializers.ModelSerializer):
             return 'comment'
         return None
 
+    # Get likes on either movie or comment
     def get_content_object(self, obj):
         if obj.content_type == Movie.get_default_like_content_type():
             movie = obj.content_object
@@ -137,6 +139,14 @@ class LikeSerializer(serializers.ModelSerializer):
                 'type': 'comment',
                 'movie_id': comment.movie.id if comment.movie else None
             }
+        return None
+    
+    #This is used for the feed page to get a like or a comment "Sandra Commented on x"
+    def get_type(self, obj):
+        if obj.content_type == Movie.get_default_like_content_type():
+            return 'like'
+        elif obj.content_type == Comment.get_default_like_content_type():
+            return 'comment'
         return None
 
     def get_movie_title(self, obj):
@@ -162,13 +172,8 @@ class LikeSerializer(serializers.ModelSerializer):
             }
         return None
 
-    #This is used for the feed page to get a like or a comment "Sandra Commented on x"
-    def get_type(self, obj):
-        if obj.content_type == Movie.get_default_like_content_type():
-            return 'like'
-        elif obj.content_type == Comment.get_default_like_content_type():
-            return 'comment'
-        return None
+
+
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     likes_count = serializers.SerializerMethodField()
