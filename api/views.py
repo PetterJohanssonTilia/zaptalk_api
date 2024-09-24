@@ -234,6 +234,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
                 return Response({"detail": f"You have unfollowed {user_to_follow.user.username}."}, status=status.HTTP_200_OK)
             else:
                 user_to_follow.followers.add(user)
+                create_notification(user_to_follow.user, request.user, 'follow')
                 return Response({"detail": f"You are now following {user_to_follow.user.username}."}, status=status.HTTP_200_OK)
         except UserProfile.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -333,11 +334,12 @@ class LikeViewSet(viewsets.ModelViewSet):
                 object_id=object_id
             )
 
-            if not created:
+            if created:
+                create_notification(recipient, user, 'like')
+                is_liked = True
+            else:
                 like.delete()
                 is_liked = False
-            else:
-                is_liked = True
 
             likes_count = Like.objects.filter(
                 content_type=content_type,
