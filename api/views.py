@@ -324,8 +324,11 @@ class LikeViewSet(viewsets.ModelViewSet):
 
             if content_type_str == 'movie':
                 content_type = Movie.get_default_like_content_type()
+                recipient = None
             elif content_type_str == 'comment':
                 content_type = Comment.get_default_like_content_type()
+                comment = Comment.objects.get(id=object_id)
+                recipient = comment.user
             else:
                 return Response({"detail": "Invalid content_type"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -336,7 +339,8 @@ class LikeViewSet(viewsets.ModelViewSet):
             )
 
             if created:
-                create_notification(recipient, user, 'like')
+                if recipient and recipient != user:
+                    create_notification(recipient, user, 'like')
                 is_liked = True
             else:
                 like.delete()
