@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Ban, UserProfile
 from django.contrib.auth import get_user_model
-from .models import Movie, UserProfile, Like, Comment,  Ban, BanAppeal
+from .models import Movie, UserProfile, Like, Comment,  Ban, BanAppeal, Notification
 #Needed for cloudinary Avatar
 from django.core.files.base import ContentFile
 import base64
@@ -272,3 +272,11 @@ class BanAppealSerializer(serializers.ModelSerializer):
             user.save()
         
         return super().create(validated_data)
+    
+class NotificationSerializer(serializers.ModelSerializer):
+    sender_username = serializers.CharField(source='sender.username', read_only=True)
+    sender_avatar = serializers.ImageField(source='sender.profile.avatar', read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = ['id', 'sender_username', 'sender_avatar', 'notification_type', 'is_read', 'created_at']
