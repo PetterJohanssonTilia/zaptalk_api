@@ -12,7 +12,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.db.models import Q, Count, Case, When, IntegerField, Subquery
 from django_filters import rest_framework as filters
-from .models import Movie, UserProfile, Like, Comment, Ban, BanAppeal
+from .models import Movie, UserProfile, Like, Comment, Ban, BanAppeal, Notification
 from .serializers import MovieSerializer, UserSerializer, UserProfileSerializer, LikeSerializer, CommentSerializer, BanSerializer, BanAppealSerializer, NotificationSerializer
 
 import random
