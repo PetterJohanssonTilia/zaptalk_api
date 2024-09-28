@@ -91,7 +91,10 @@ WSGI_APPLICATION = 'movieapi.wsgi.application'
 # Database configuration
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
-        'default': dj_database_url.config(default=os.environ['DATABASE_URL'], conn_max_age=600)
+        'default': dj_database_url.config(
+            default=os.environ['DATABASE_URL'],
+            conn_max_age=600
+        )
     }
 else:
     DATABASES = {
@@ -100,20 +103,32 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'UserAttributeSimilarityValidator'
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'MinimumLengthValidator'
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'CommonPasswordValidator'
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'NumericPasswordValidator'
+        ),
     },
 ]
 
@@ -139,17 +154,19 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
 
 
-cloudinary.config( 
-  cloud_name = "your_cloud_name", 
-  api_key = "your_api_key", 
-  api_secret = "your_api_secret" 
+cloudinary.config(
+  cloud_name="your_cloud_name",
+  api_key="your_api_key",
+  api_secret="your_api_secret"
 )
 
 # Cloudinary configuration
 cloudinary.config(
-    cloud_name = os.environ.get('CLOUDINARY_URL', '').split('@')[-1],
-    api_key = os.environ.get('CLOUDINARY_URL', '').split('@')[0].split('//')[1].split(':')[0],
-    api_secret = os.environ.get('CLOUDINARY_URL', '').split('@')[0].split('//')[1].split(':')[1]
+    cloud_name=os.environ.get('CLOUDINARY_URL', '').split('@')[-1],
+    api_key=os.environ.get('CLOUDINARY_URL', '').split('@')[0]
+    .split('//')[1].split(':')[0],
+    api_secret=os.environ.get('CLOUDINARY_URL', '').split('@')[0]
+    .split('//')[1].split(':')[1]
 )
 
 # Default primary key field type
@@ -177,7 +194,9 @@ if 'CLIENT_ORIGIN_DEV' in os.environ:
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = [ "https://8000-petterjohans-zaptalkapi-crwv2ijg0nb.ws.codeinstitute-ide.net"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://8000-petterjohans-zaptalkapi-crwv2ijg0nb.ws.codeinstitute-ide.net"
+]
 
 if 'CLIENT_ORIGIN' in os.environ:
     CSRF_TRUSTED_ORIGINS.append(os.environ.get('CLIENT_ORIGIN'))
@@ -189,14 +208,14 @@ if 'CLIENT_ORIGIN_DEV' in os.environ:
         CSRF_TRUSTED_ORIGINS.append(f"https://{extracted}")
     else:
         CSRF_TRUSTED_ORIGINS.append(client_origin_dev)
-#AllAUTH
+# AllAUTH
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_UNIQUE_EMAIL = False
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'username'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
-#Rest framework
+# Rest framework
 REST_USE_JWT = True
 JWT_AUTH_COOKIE = 'my-app-auth'
 JWT_AUTH_REFRESH_COOKIE = 'my-refresh-token'
@@ -207,8 +226,10 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
-     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-}   
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ),
+}
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
@@ -256,7 +277,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'api': {  
+        'api': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
