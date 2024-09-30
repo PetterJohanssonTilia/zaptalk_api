@@ -305,7 +305,7 @@ All files containing custom Python code were then validated using the [Code Inst
 
 ### Resolved bugs
 
-- 
+
 - The genre and search function had to be made case insensitive
 
 - Added related_name to my userprofile model to be able to access it from my userserializer. with this I also had to change the serializer to go from using user.userprofile to user.profile
@@ -319,9 +319,11 @@ All files containing custom Python code were then validated using the [Code Inst
 
 ### Unresolved bugs
 
-The userid is different inside the userprofile and inside the comments. This was circumvented by adding a username to fetch instead.
+- The moviemodel isn't set up correctly to filter out the no-thumbnail movie objects. Currently it's filtering out if the movie has it's thumbnail value being null or ''. I'm now filtering this in the frontend, looking inside movies if it has a thumbnail attribute at all.
 
-the way I'm fetching the movies is still poorly designed resulting in fetching 7500 movies on the home page when only looking for 3
+- The userid is different inside the userprofile and inside the comments. This was circumvented by adding a username to fetch instead.
+
+- the way I'm fetching the movies is still poorly designed resulting in fetching 7500 movies on the home page when only looking for 3
 
 ## Deployment
 The ZapTalk API is deployed to Heroku, using a Postgres database.
