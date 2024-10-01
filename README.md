@@ -269,20 +269,6 @@ the following additional features were added as a result of front-end testing:
 - Added a ban/banappeal model
 - Added a notifications model
 
-### Automated tests
-
-Nine unit tests were written for the `contacts` endpoint. These are in `contacts/tests.py`, and all passed:
-
-- Test that the tribe administrator can list contacts for their tribe.
-- Test that a tribe member with no admin status in the same tribe can list contacts.
-- Test that an unauthenticated user cannot list contacts.
-- Test that a tribe administrator can create a new contact for their tribe.
-- Test that a tribe member without admin status cannot create a new contact.
-- Test that an unauthenticated user cannot create a new contact.
-- Test that a tribe administrator can delete a contact.
-- Test that a tribe member without admin status cannot delete a contact.
-- Test than an unauthenticated user cannot delete a contact.
-
 
 ### Python validation
 
